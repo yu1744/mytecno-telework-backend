@@ -1,0 +1,23 @@
+# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  user: one
+  date: 2025-10-06
+  work_hours: 1.5
+  reason: MyString
+  application_status: one
+  is_special_case: false
+  special_reason: MyString
+  start_time: 2025-10-06 14:16:00
+  end_time: 2025-10-06 14:16:00
+
+two:
+  user: two
+  date: 2025-10-06
+  work_hours: 1.5
+  reason: MyString
+  application_status: two
+  is_special_case: false
+  special_reason: MyString
+  start_time: 2025-10-06 14:16:00
+  end_time: 2025-10-06 14:16:00

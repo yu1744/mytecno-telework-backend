@@ -1,4 +1,28 @@
 Rails.application.routes.draw do
+  namespace :api do
+    namespace :v1 do
+      get "microsoft_graph_auth/authorize"
+      get "microsoft_graph_auth/callback"
+      mount_devise_token_auth_for 'User', at: 'auth'
+      resources :users
+      resources :departments
+      resources :roles
+      resources :application_statuses
+      resources :applications
+      resources :approvals
+      resources :transport_routes, only: [:index]
+      resources :user_transport_routes, only: [:index, :create, :destroy]
+
+      namespace :admin do
+        resources :users, only: [:index, :update]
+        resources :applications, only: [:index] do
+          collection do
+            get 'export_csv'
+          end
+        end
+      end
+    end
+  end
   # Define your application routes per the DSL in https://guides.rubyonrails.org/routing.html
 
   # Reveal health status on /up that returns 200 if the app boots with no exceptions, otherwise 500.
