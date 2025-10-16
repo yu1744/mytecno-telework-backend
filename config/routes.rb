@@ -14,12 +14,13 @@ Rails.application.routes.draw do
       resources :user_transport_routes, only: [:index, :create, :destroy]
 
       namespace :admin do
-        resources :users, only: [:index, :update]
+        resources :users, only: [:index, :create, :update, :destroy]
         resources :applications, only: [:index] do
           collection do
             get 'export_csv'
           end
         end
+        resources :user_info_changes, only: [:index, :create, :update, :destroy]
       end
     end
   end
