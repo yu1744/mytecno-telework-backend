@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_06_062147) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_16_065635) do
   create_table "application_statuses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -25,10 +25,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_062147) do
     t.bigint "application_status_id", null: false
     t.boolean "is_special_case"
     t.string "special_reason"
-    t.datetime "start_time"
-    t.datetime "end_time"
+    t.time "start_time"
+    t.time "end_time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "overtime_reason"
     t.index ["application_status_id"], name: "index_applications_on_application_status_id"
     t.index ["user_id"], name: "index_applications_on_user_id"
   end
@@ -59,6 +60,36 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_062147) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "user_info_changes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "changer_id", null: false
+    t.date "effective_date", null: false
+    t.bigint "new_department_id"
+    t.bigint "new_role_id"
+    t.bigint "new_manager_id"
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["changer_id"], name: "index_user_info_changes_on_changer_id"
+    t.index ["new_department_id"], name: "index_user_info_changes_on_new_department_id"
+    t.index ["new_manager_id"], name: "index_user_info_changes_on_new_manager_id"
+    t.index ["new_role_id"], name: "index_user_info_changes_on_new_role_id"
+    t.index ["user_id"], name: "index_user_info_changes_on_user_id"
+  end
+
+  create_table "user_profile_versions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.bigint "department_id", null: false
+    t.bigint "role_id", null: false
+    t.date "effective_date", null: false
+    t.string "status", default: "pending", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["department_id"], name: "index_user_profile_versions_on_department_id"
+    t.index ["role_id"], name: "index_user_profile_versions_on_role_id"
+    t.index ["user_id"], name: "index_user_profile_versions_on_user_id"
   end
 
   create_table "user_transport_routes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -94,6 +125,8 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_062147) do
     t.string "microsoft_access_token"
     t.string "microsoft_refresh_token"
     t.datetime "microsoft_token_expires_at"
+    t.boolean "is_child_care_or_family_care_leave_target", default: false, null: false
+    t.string "employee_number"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["department_id"], name: "index_users_on_department_id"
     t.index ["email"], name: "index_users_on_email", unique: true
@@ -107,6 +140,14 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_06_062147) do
   add_foreign_key "applications", "users"
   add_foreign_key "approvals", "applications"
   add_foreign_key "approvals", "users", column: "approver_id"
+  add_foreign_key "user_info_changes", "departments", column: "new_department_id"
+  add_foreign_key "user_info_changes", "roles", column: "new_role_id"
+  add_foreign_key "user_info_changes", "users"
+  add_foreign_key "user_info_changes", "users", column: "changer_id"
+  add_foreign_key "user_info_changes", "users", column: "new_manager_id"
+  add_foreign_key "user_profile_versions", "departments"
+  add_foreign_key "user_profile_versions", "roles"
+  add_foreign_key "user_profile_versions", "users"
   add_foreign_key "user_transport_routes", "transport_routes"
   add_foreign_key "user_transport_routes", "users"
   add_foreign_key "users", "departments"
