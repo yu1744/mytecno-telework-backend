@@ -2,13 +2,31 @@ module Api
   module V1
     module Admin
       class UsersController < ApplicationController
-        before_action :set_user, only: [:update, :destroy]
+        before_action :set_user, only: [:show, :update, :destroy]
 
         # GET /api/v1/admin/users
         def index
           authorize([:admin, User])
           @users = User.includes(:department, :role)
-          render json: @users, include: [:department, :role]
+          render json: @users.as_json(
+            include: {
+              department: { only: [:id, :name] },
+              role: { only: [:id, :name] }
+            },
+            methods: [:hired_date]
+          )
+        end
+
+        # GET /api/v1/admin/users/:id
+        def show
+          authorize([:admin, @user])
+          render json: @user.as_json(
+            include: {
+              department: { only: [:id, :name] },
+              role: { only: [:id, :name] }
+            },
+            methods: [:hired_date]
+          )
         end
 
         # POST /api/v1/admin/users
@@ -16,7 +34,13 @@ module Api
           authorize([:admin, User])
           @user = User.new(user_params)
           if @user.save
-            render json: @user, status: :created
+            render json: @user.as_json(
+              include: {
+                department: { only: [:id, :name] },
+                role: { only: [:id, :name] }
+              },
+              methods: [:hired_date]
+            ), status: :created
           else
             render json: @user.errors, status: :unprocessable_entity
           end
@@ -27,7 +51,13 @@ module Api
         def update
           authorize([:admin, @user])
           if @user.update(user_params)
-            render json: @user
+            render json: @user.as_json(
+              include: {
+                department: { only: [:id, :name] },
+                role: { only: [:id, :name] }
+              },
+              methods: [:hired_date]
+            )
           else
             render json: @user.errors, status: :unprocessable_entity
           end
@@ -55,7 +85,8 @@ module Api
             :employee_number,
             :department_id,
             :role_id,
-            :manager_id
+            :manager_id,
+            :hired_date
           )
         end
       end

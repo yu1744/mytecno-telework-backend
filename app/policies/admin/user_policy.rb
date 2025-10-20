@@ -4,6 +4,10 @@ module Admin
       user.admin?
     end
 
+    def show?
+      user.admin?
+    end
+
     def update?
       user.admin?
     end

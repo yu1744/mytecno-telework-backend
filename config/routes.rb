@@ -4,7 +4,7 @@ Rails.application.routes.draw do
       get "microsoft_graph_auth/authorize"
       get "microsoft_graph_auth/callback"
       mount_devise_token_auth_for 'User', at: 'auth'
-      resources :users
+      resources :users, only: [:index, :show]
       resources :departments
       resources :roles
       resources :application_statuses
@@ -14,7 +14,7 @@ Rails.application.routes.draw do
       resources :user_transport_routes, only: [:index, :create, :destroy]
 
       namespace :admin do
-        resources :users, only: [:index, :create, :update, :destroy]
+        resources :users, only: [:index, :create, :update, :destroy, :show]
         resources :applications, only: [:index] do
           collection do
             get 'export_csv'
