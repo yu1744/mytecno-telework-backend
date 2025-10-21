@@ -8,7 +8,11 @@ Rails.application.routes.draw do
       resources :departments
       resources :roles
       resources :application_statuses
-      resources :applications
+      resources :applications do
+        member do
+          put :cancel
+        end
+      end
       resources :approvals
       resources :transport_routes, only: [:index]
       resources :user_transport_routes, only: [:index, :create, :destroy]

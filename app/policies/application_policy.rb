@@ -43,7 +43,16 @@ class ApplicationPolicy
     end
 
     def resolve
-      raise NoMethodError, "You must define #resolve in #{self.class}"
+      case user.role.name
+      when 'admin'
+        scope.all
+      when 'approver'
+        scope.where(user_id: User.where(department_id: user.department_id).pluck(:id))
+      when 'applicant'
+        scope.where(user_id: user.id)
+      else
+        scope.none
+      end
     end
 
     private
