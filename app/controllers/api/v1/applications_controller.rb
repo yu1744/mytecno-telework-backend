@@ -26,7 +26,7 @@ class Api::V1::ApplicationsController < ApplicationController
   private
   
   def application_params
-    params.require(:application).permit(:date, :reason)
+    params.require(:application).permit(:date, :reason, :work_option, :start_time, :end_time, :is_special, :is_overtime, :overtime_reason, :overtime_end)
   end
 
   def destroy
