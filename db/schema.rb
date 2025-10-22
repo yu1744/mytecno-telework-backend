@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_010304) do
+ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
   create_table "application_statuses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -46,6 +46,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_010304) do
     t.bigint "approver_id", null: false
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "pending", null: false
     t.index ["application_id"], name: "index_approvals_on_application_id"
     t.index ["approver_id"], name: "index_approvals_on_approver_id"
   end

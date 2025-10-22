@@ -33,7 +33,7 @@ class ApplicationPolicy
   end
 
   def destroy?
-    false
+    user.role.name == 'admin' ? false : user == record.user
   end
 
   class Scope
@@ -47,9 +47,9 @@ class ApplicationPolicy
       when 'admin'
         scope.all
       when 'approver'
-        scope.where(user_id: User.where(department_id: user.department_id).pluck(:id))
+        scope.joins(:user).where(users: { department_id: user.department_id })
       when 'applicant'
-        scope.where(user_id: user.id)
+        scope.where(user: user)
       else
         scope.none
       end

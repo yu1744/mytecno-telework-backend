@@ -26,9 +26,10 @@ class Api::V1::ApplicationsController < ApplicationController
   def update
   end
   
-  def cancel
+  def destroy
     @application = Application.find_by(id: params[:id])
     if @application
+      authorize @application
       # 4: "取り消し"
       if @application.update(application_status_id: 4)
         render json: { message: 'Application canceled successfully' }, status: :ok
@@ -44,8 +45,5 @@ class Api::V1::ApplicationsController < ApplicationController
   
   def application_params
     params.require(:application).permit(:date, :reason, :work_option, :start_time, :end_time, :is_special, :is_overtime, :overtime_reason, :overtime_end)
-  end
-
-  def destroy
   end
 end
