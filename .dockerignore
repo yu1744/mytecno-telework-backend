@@ -43,3 +43,18 @@
 # Ignore Docker-related files
 /.dockerignore
 /Dockerfile*
+
+# 追加の最適化項目
+/test
+/spec
+/coverage
+/.byebug_history
+/vendor/bundle
+/public/assets
+/public/packs
+/node_modules
+*.sqlite3
+.DS_Store
+.vscode
+.idea
+README.md
