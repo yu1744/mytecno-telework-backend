@@ -4,10 +4,18 @@ class Api::V1::ApprovalsController < ApplicationController
   def index
     authorize :approval, :index?
 
-    subordinate_ids = current_api_v1_user.subordinates.pluck(:id)
-    applications = Application.where(user_id: subordinate_ids, application_status_id: 1) # 1: pending
+    applications =
+      if current_api_v1_user.role.name == 'admin'
+        Application.pending
+      elsif current_api_v1_user.role.name == 'approver'
+        department_id = current_api_v1_user.department_id
+        user_ids = User.where(department_id: department_id).pluck(:id)
+        Application.pending.where(user_id: user_ids)
+      else
+        []
+      end
 
-    render json: applications, include: [:user, :application_status]
+    render json: applications, include: %i[user application_status]
   end
 
   def show
@@ -17,27 +25,26 @@ class Api::V1::ApprovalsController < ApplicationController
   end
 
   def update
-    authorize :approval, :update?
+    @approval = Approval.find(params[:id])
+    authorize @approval
 
-    application = Application.find(params[:id])
-    status_name = params[:status] # "approved" or "rejected"
-    comment = params[:comment]
-
-    # "approved" => 2, "rejected" => 3
-    new_status_id = ApplicationStatus.find_by(name: status_name).id
-
-    ActiveRecord::Base.transaction do
-      application.update!(application_status_id: new_status_id)
-      Approval.create!(
-        application: application,
-        approver_id: current_api_v1_user.id,
-        comment: comment
-      )
+    status = params[:status] # "approved" or "rejected"
+    
+    unless %w[approved rejected].include?(status)
+      return render json: { error: 'Invalid status' }, status: :bad_request
     end
 
-    render json: { message: "Application #{status_name} successfully." }, status: :ok
-  rescue ActiveRecord::RecordNotFound
-    render json: { error: 'Application not found.' }, status: :not_found
+    ActiveRecord::Base.transaction do
+      @approval.update!(status: status, approver_id: current_api_v1_user.id, comment: params[:comment])
+      
+      new_status_name = (status == 'approved') ? 'approved' : 'rejected'
+      application_status = ApplicationStatus.find_by!(name: new_status_name)
+      @approval.application.update!(application_status: application_status)
+    end
+
+    render json: { message: "Application #{status} successfully." }, status: :ok
+  rescue ActiveRecord::RecordNotFound => e
+    render json: { error: 'Record not found.' }, status: :not_found
   rescue => e
     render json: { error: e.message }, status: :unprocessable_entity
   end

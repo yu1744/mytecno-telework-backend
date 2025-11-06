@@ -4,6 +4,8 @@ class Application < ApplicationRecord
 
   has_many :approvals
 
+  scope :pending, -> { where(application_status_id: 1) }
+
   validates :date, presence: true
   validates :work_option, presence: true, inclusion: { in: %w[full_day am_half pm_half] }
   validates :reason, presence: true, if: :is_special?

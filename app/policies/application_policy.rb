@@ -33,7 +33,7 @@ class ApplicationPolicy
   end
 
   def destroy?
-    false
+    user.role.name == 'admin' ? false : user == record.user
   end
 
   class Scope
@@ -43,7 +43,16 @@ class ApplicationPolicy
     end
 
     def resolve
-      raise NoMethodError, "You must define #resolve in #{self.class}"
+      case user.role.name
+      when 'admin'
+        scope.all
+      when 'approver'
+        scope.joins(:user).where(users: { department_id: user.department_id })
+      when 'applicant'
+        scope.where(user: user)
+      else
+        scope.none
+      end
     end
 
     private
