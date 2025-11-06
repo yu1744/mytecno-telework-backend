@@ -15,6 +15,19 @@ class Api::V1::ApprovalsController < ApplicationController
         []
       end
 
+    # Sorting
+    sort_column = params[:sort_by].in?(%w[created_at date status]) ? params[:sort_by] : 'created_at'
+    sort_direction = params[:sort_order].in?(%w[asc desc]) ? params[:sort_order] : 'desc'
+
+    applications = applications.left_outer_joins(:application_status)
+
+    order_clause = if sort_column == 'status'
+                     "application_statuses.name #{sort_direction}"
+                   else
+                     "applications.#{sort_column} #{sort_direction}"
+                   end
+    applications = applications.order(Arel.sql(order_clause))
+
     render json: applications, include: %i[user application_status]
   end
 
