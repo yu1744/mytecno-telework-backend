@@ -12,6 +12,37 @@ class Api::V1::ApplicationsController < ApplicationController
   def show
   end
 
+  def stats
+    # ログインユーザーが申請した、または承認者として関わっている申請を取得
+    applications = Application.where(user_id: current_api_v1_user.id).or(Application.where(id: Approval.where(approver_id: current_api_v1_user.id).select(:application_id)))
+    
+    # ステータスごとの件数を集計
+    # 1: "申請中", 2: "承認", 3: "却下"
+    stats = {
+      pending: applications.where(application_status_id: 1).count,
+      approved: applications.where(application_status_id: 2).count,
+      rejected: applications.where(application_status_id: 3).count
+    }
+    
+    render json: stats
+  end
+
+  def recent
+    # ログインユーザーが申請した、または承認者として関わっている最新5件の申請を取得
+    applications = Application.where(user_id: current_api_v1_user.id)
+                               .or(Application.where(id: Approval.where(approver_id: current_api_v1_user.id).select(:application_id)))
+                              .order(created_at: :desc)
+                              .limit(5)
+                              .includes(:user, :application_status)
+    
+    render json: applications.as_json(
+      include: {
+        user: { only: [:name] },
+        application_status: { only: [:name] }
+      }
+    )
+  end
+
   def create
     application = current_api_v1_user.applications.build(application_params)
     application.application_status_id = 1 # 1: "申請中"

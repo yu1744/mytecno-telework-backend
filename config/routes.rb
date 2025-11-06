@@ -9,6 +9,8 @@ Rails.application.routes.draw do
       resources :roles
       resources :application_statuses
       resources :applications, only: [:index, :create, :destroy]
+      get 'applications/stats', to: 'applications#stats'
+      get 'applications/recent', to: 'applications#recent'
       resources :approvals, only: [:index, :update]
       resources :transport_routes, only: [:index]
       resources :user_transport_routes, only: [:index, :create, :destroy]
