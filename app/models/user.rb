@@ -10,6 +10,7 @@ class User < ApplicationRecord
 
   has_many :applications
   has_many :approvals, foreign_key: :approver_id
+  has_many :notifications, dependent: :destroy
 
   belongs_to :manager, class_name: 'User', optional: true
   has_many :subordinates, class_name: 'User', foreign_key: 'manager_id'

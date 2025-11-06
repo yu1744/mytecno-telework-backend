@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_06_065056) do
   create_table "application_statuses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -55,6 +55,16 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+  end
+
+  create_table "notifications", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.text "message"
+    t.boolean "read", default: false
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
@@ -147,6 +157,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
   add_foreign_key "applications", "users"
   add_foreign_key "approvals", "applications"
   add_foreign_key "approvals", "users", column: "approver_id"
+  add_foreign_key "notifications", "users"
   add_foreign_key "user_info_changes", "departments", column: "new_department_id"
   add_foreign_key "user_info_changes", "roles", column: "new_role_id"
   add_foreign_key "user_info_changes", "users"

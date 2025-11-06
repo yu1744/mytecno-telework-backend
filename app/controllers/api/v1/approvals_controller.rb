@@ -70,6 +70,15 @@ class Api::V1::ApprovalsController < ApplicationController
       new_status_name = (status == 'approved') ? '承認' : '却下'
       application_status = ApplicationStatus.find_by!(name: new_status_name)
       @application.update!(application_status: application_status)
+
+      # 通知を作成
+      status_ja = (status == 'approved') ? '承認' : '却下'
+      message = "あなたの申請「#{@application.date}」が#{current_api_v1_user.name}によって#{status_ja}されました。"
+      Notification.create!(
+        user: @application.user,
+        message: message,
+        link: "/history" # フロントエンドの申請履歴ページへのリンク
+      )
     end
 
     render json: { message: "Application #{status} successfully." }, status: :ok
