@@ -4,6 +4,7 @@ class Application < ApplicationRecord
 
   has_many :approvals
 
+  # application_status_id: 1は「申請中」
   scope :pending, -> { where(application_status_id: 1) }
 
   validates :date, presence: true
