@@ -2,7 +2,7 @@ class Api::V1::NotificationsController < ApplicationController
   before_action :authenticate_api_v1_user!
 
   def index
-    @notifications = current_user.notifications.where(read: false)
+    @notifications = current_user.notifications.where(read: false).includes(:notifiable)
     render json: @notifications
   end
 
