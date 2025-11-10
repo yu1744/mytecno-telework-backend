@@ -5,20 +5,21 @@ class Api::V1::UsersController < ApplicationController
   end
 
   def show
-    user = User.find(params[:id])
-    render json: user
-  end
-
-  def profile
-    user = User.find(params[:id])
+    user = current_api_v1_user
     render json: {
       id: user.id,
-      employee_number: user.employee_number,
       name: user.name,
       email: user.email,
-      department: user.department.name,
-      role: user.role.name,
-      manager: user.manager&.name
+      employee_number: user.employee_number,
+      department: user.department,
+      role: user.role,
+      user_transport_routes: user.user_transport_routes.includes(:transport_route).map do |utr|
+        {
+          id: utr.id,
+          transport_route: utr.transport_route,
+          cost: utr.cost
+        }
+      end
     }
   end
 
