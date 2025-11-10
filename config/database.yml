@@ -16,10 +16,21 @@ default: &default
   username: <%= ENV['MYSQL_USER'] %>
   password: <%= ENV['MYSQL_PASSWORD'] %>
   host: <%= ENV['MYSQL_HOST'] %>
+  # パフォーマンス最適化
+  variables:
+    sql_mode: TRADITIONAL
+  # コネクションプール最適化
+  checkout_timeout: 5
+  reaping_frequency: 10
+  # プリペアドステートメント無効化（開発環境で高速化）
+  prepared_statements: false
 
 development:
   <<: *default
   database: myapp_development
+  # 開発環境専用の最適化
+  pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 10 } %>
+  timeout: 5000
 
 # Warning: The database defined as "test" will be erased and
 # re-generated from your development database when you run "rake".

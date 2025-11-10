@@ -2,14 +2,76 @@ class Api::V1::ApplicationsController < ApplicationController
   before_action :authenticate_api_v1_user!
 
   def index
-    @applications = policy_scope(Application).includes(:user)
+    Rails.logger.info "Current user role: #{current_api_v1_user.role.name}"
+    @applications = policy_scope(Application).includes(user: :department).includes(:application_status)
+
+    # Filtering
+    if params[:filter_by_status].present?
+      @applications = @applications.where(application_status_id: params[:filter_by_status])
+    end
+    if params[:filter_by_user].present? && current_api_v1_user.role.name == 'admin'
+      @applications = @applications.where(user_id: params[:filter_by_user])
+    end
+
+    # Sorting
+    sort_column = params[:sort_by].in?(%w[created_at date status]) ? params[:sort_by] : 'created_at'
+    sort_direction = params[:sort_order].in?(%w[asc desc]) ? params[:sort_order] : 'desc'
+
+    @applications = @applications.left_outer_joins(:application_status)
+
+    order_clause = if sort_column == 'status'
+                     "application_statuses.name #{sort_direction}"
+                   else
+                     "applications.#{sort_column} #{sort_direction}"
+                   end
+    @applications = @applications.order(Arel.sql(order_clause))
+
     render json: @applications.as_json(
-      only: [:id, :reason, :created_at, :application_status_id, :date],
-      include: { user: { only: [:name] } }
+      only: [:id, :reason, :created_at, :date, :application_status_id],
+      include: {
+        user: {
+          only: [:name],
+          include: {
+            department: { only: [:name] }
+          }
+        },
+        application_status: { only: [:name] }
+      }
     )
   end
 
   def show
+  end
+
+  def stats
+    # ログインユーザーが申請した、または承認者として関わっている申請を取得
+    applications = Application.where(user_id: current_api_v1_user.id).or(Application.where(id: Approval.where(approver_id: current_api_v1_user.id).select(:application_id)))
+    
+    # ステータスごとの件数を集計
+    # 1: "申請中", 2: "承認", 3: "却下"
+    stats = {
+      pending: applications.where(application_status_id: 1).count,
+      approved: applications.where(application_status_id: 2).count,
+      rejected: applications.where(application_status_id: 3).count
+    }
+    
+    render json: stats
+  end
+
+  def recent
+    # ログインユーザーが申請した、または承認者として関わっている最新5件の申請を取得
+    applications = Application.where(user_id: current_api_v1_user.id)
+                               .or(Application.where(id: Approval.where(approver_id: current_api_v1_user.id).select(:application_id)))
+                              .order(created_at: :desc)
+                              .limit(5)
+                              .includes(:user, :application_status)
+    
+    render json: applications.as_json(
+      include: {
+        user: { only: [:name] },
+        application_status: { only: [:name] }
+      }
+    )
   end
 
   def create

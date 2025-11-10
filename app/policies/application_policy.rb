@@ -43,14 +43,19 @@ class ApplicationPolicy
     end
 
     def resolve
+      Rails.logger.info "ApplicationPolicy::Scope resolving for user: #{user.id}, role: #{user.role.name}"
       case user.role.name
       when 'admin'
+        Rails.logger.info 'Applying admin scope'
         scope.all
       when 'approver'
+        Rails.logger.info 'Applying approver scope'
         scope.joins(:user).where(users: { department_id: user.department_id })
       when 'applicant'
+        Rails.logger.info 'Applying applicant scope'
         scope.where(user: user)
       else
+        Rails.logger.info 'Applying default scope (none)'
         scope.none
       end
     end

@@ -10,14 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
-  create_table "application_statuses", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+ActiveRecord::Schema[8.0].define(version: 2025_11_06_065056) do
+  create_table "application_statuses", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
-  create_table "applications", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "applications", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.date "date"
     t.float "work_hours"
@@ -25,14 +25,11 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
     t.bigint "application_status_id", null: false
     t.boolean "is_special_case"
     t.string "special_reason"
-    t.time "start_time"
-    t.time "end_time"
+    t.datetime "start_time"
+    t.datetime "end_time"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.string "overtime_reason"
-    t.string "work_location"
     t.string "work_option"
-    t.string "approval_status", default: "pending"
     t.boolean "is_special"
     t.boolean "is_overtime"
     t.time "overtime_end"
@@ -40,7 +37,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
     t.index ["user_id"], name: "index_applications_on_user_id"
   end
 
-  create_table "approvals", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "approvals", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.bigint "application_id", null: false
     t.string "comment"
     t.bigint "approver_id", null: false
@@ -51,25 +48,35 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
     t.index ["approver_id"], name: "index_approvals_on_approver_id"
   end
 
-  create_table "departments", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "departments", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
-  create_table "roles", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "notifications", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.text "message"
+    t.boolean "read", default: false
+    t.string "link"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "roles", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
-  create_table "transport_routes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "transport_routes", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end
 
-  create_table "user_info_changes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "user_info_changes", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "changer_id", null: false
     t.date "effective_date", null: false
@@ -86,20 +93,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
     t.index ["user_id"], name: "index_user_info_changes_on_user_id"
   end
 
-  create_table "user_profile_versions", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
-    t.bigint "user_id", null: false
-    t.bigint "department_id", null: false
-    t.bigint "role_id", null: false
-    t.date "effective_date", null: false
-    t.string "status", default: "pending", null: false
-    t.datetime "created_at", null: false
-    t.datetime "updated_at", null: false
-    t.index ["department_id"], name: "index_user_profile_versions_on_department_id"
-    t.index ["role_id"], name: "index_user_profile_versions_on_role_id"
-    t.index ["user_id"], name: "index_user_profile_versions_on_user_id"
-  end
-
-  create_table "user_transport_routes", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "user_transport_routes", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.bigint "user_id", null: false
     t.bigint "transport_route_id", null: false
     t.datetime "created_at", null: false
@@ -108,7 +102,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
     t.index ["user_id"], name: "index_user_transport_routes_on_user_id"
   end
 
-  create_table "users", charset: "utf8mb4", collation: "utf8mb4_0900_ai_ci", force: :cascade do |t|
+  create_table "users", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "provider", default: "email", null: false
     t.string "uid", default: "", null: false
     t.string "encrypted_password", default: "", null: false
@@ -132,7 +126,6 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
     t.string "microsoft_access_token"
     t.string "microsoft_refresh_token"
     t.datetime "microsoft_token_expires_at"
-    t.boolean "is_child_care_or_family_care_leave_target", default: false, null: false
     t.string "employee_number"
     t.index ["confirmation_token"], name: "index_users_on_confirmation_token", unique: true
     t.index ["department_id"], name: "index_users_on_department_id"
@@ -147,14 +140,12 @@ ActiveRecord::Schema[8.0].define(version: 2025_10_21_140545) do
   add_foreign_key "applications", "users"
   add_foreign_key "approvals", "applications"
   add_foreign_key "approvals", "users", column: "approver_id"
+  add_foreign_key "notifications", "users"
   add_foreign_key "user_info_changes", "departments", column: "new_department_id"
   add_foreign_key "user_info_changes", "roles", column: "new_role_id"
   add_foreign_key "user_info_changes", "users"
   add_foreign_key "user_info_changes", "users", column: "changer_id"
   add_foreign_key "user_info_changes", "users", column: "new_manager_id"
-  add_foreign_key "user_profile_versions", "departments"
-  add_foreign_key "user_profile_versions", "roles"
-  add_foreign_key "user_profile_versions", "users"
   add_foreign_key "user_transport_routes", "transport_routes"
   add_foreign_key "user_transport_routes", "users"
   add_foreign_key "users", "departments"
