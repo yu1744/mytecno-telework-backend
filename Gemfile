@@ -53,3 +53,5 @@ gem "devise_token_auth"
 gem 'pundit'
 
 gem 'microsoft_graph'
+
+gem 'groupdate'

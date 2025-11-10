@@ -30,6 +30,8 @@ Rails.application.routes.draw do
           end
         end
         resources :user_info_changes, only: [:index, :create, :update, :destroy]
+        get 'usage_stats', to: 'usage_stats#index'
+        get 'usage_stats/export', to: 'usage_stats#export'
       end
     end
   end

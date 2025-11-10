@@ -133,6 +133,64 @@ users_data.each do |user_data|
   end
 end
 
+# Create Applications and Approvals for test users
+puts "📝 申請・承認データを作成中..."
+
+# 承認者を取得
+approver1 = User.find_by(employee_number: 'T36879') # 中村 直美
+approver2 = User.find_by(employee_number: 'T36886') # 小林 真一
+
+# 申請者を取得
+applicant1 = User.find_by(employee_number: 'T36882') # 清水 由美
+applicant2 = User.find_by(employee_number: 'T36900') # 吉田 健二
+applicant3 = User.find_by(employee_number: 'T36875') # 林 優斗
+
+# 申請ステータスを取得
+status_pending = ApplicationStatus.find(1)
+status_approved = ApplicationStatus.find(2)
+status_rejected = ApplicationStatus.find(3)
+
+# データ作成
+application_data = [
+  # --- applicant1 (清水 由美) の申請 ---
+  # 過去の承認済み申請 (終日)
+  { user: applicant1, approver: approver1, status: status_approved, date: 10.days.ago, work_option: 'full_day', reason: '私用のため', comment: '承認します。' },
+  # 未来の申請中申請 (AM半休)
+  { user: applicant1, approver: approver1, status: status_pending, date: 5.days.from_now, work_option: 'am_half', reason: '通院のため' },
+  # 過去の却下された申請 (PM半休)
+  { user: applicant1, approver: approver1, status: status_rejected, date: 3.days.ago, work_option: 'pm_half', reason: '急な私用', comment: '業務都合により却下します。' },
+
+  # --- applicant2 (吉田 健二) の申請 ---
+  # 未来の承認済み申請 (終日)
+  { user: applicant2, approver: approver2, status: status_approved, date: 1.month.from_now, work_option: 'full_day', reason: '家族旅行', comment: '楽しんできてください。' },
+  # 今日の申請中申請 (PM半休)
+  { user: applicant2, approver: approver2, status: status_pending, date: Date.today, work_option: 'pm_half', reason: '役所手続き' },
+
+  # --- applicant3 (林 優斗) の申請 ---
+  # 過去の申請中申請 (AM半休)
+  { user: applicant3, approver: approver1, status: status_pending, date: 1.week.ago, work_option: 'am_half', reason: '子供の学校行事' },
+  # 未来の承認済み申請 (終日)
+  { user: applicant3, approver: approver2, status: status_approved, date: 2.weeks.from_now, work_option: 'full_day', reason: 'リフレッシュ休暇', comment: '承知しました。' }
+]
+
+application_data.each do |data|
+  app = Application.create!(
+    user: data[:user],
+    application_status: data[:status],
+    date: data[:date],
+    work_option: data[:work_option],
+    reason: data[:reason]
+  )
+
+  Approval.create!(
+    application: app,
+    approver: data[:approver],
+    status: data[:status].name, # '申請中', '承認', '却下'
+    comment: data[:comment]
+  )
+end
+
+puts "✅ 申請・承認データ作成完了"
 puts ""
 puts "🎉 シードデータ作成完了！"
 puts ""
