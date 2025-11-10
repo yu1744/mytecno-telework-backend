@@ -2,6 +2,7 @@ class Api::V1::ApplicationsController < ApplicationController
   before_action :authenticate_api_v1_user!
 
   def index
+    Rails.logger.info "Current user role: #{current_api_v1_user.role.name}"
     @applications = policy_scope(Application).includes(user: :department).includes(:application_status)
 
     # Filtering

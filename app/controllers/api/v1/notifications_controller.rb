@@ -2,7 +2,15 @@ class Api::V1::NotificationsController < ApplicationController
   before_action :authenticate_api_v1_user!
 
   def index
-    @notifications = current_user.notifications.where(read: false).includes(:notifiable).select { |n| n.notifiable.present? }
+    notifications = current_user.notifications.where(read: false).includes(:notifiable)
+    @notifications = notifications.select do |n|
+      if n.notifiable.nil?
+        Rails.logger.warn "Notification #{n.id} has a nil notifiable object. Notifiable type: #{n.notifiable_type}, Notifiable ID: #{n.notifiable_id}"
+        false
+      else
+        true
+      end
+    end
     render json: @notifications
   end
 
