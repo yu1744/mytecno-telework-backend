@@ -15,9 +15,13 @@ Rails.application.routes.draw do
       resources :roles
       resources :groups, only: [:index]
       resources :application_statuses
-      resources :applications, only: [:index, :create, :destroy]
-      get 'applications/stats', to: 'applications#stats'
-      get 'applications/recent', to: 'applications#recent'
+      resources :applications, only: [:index, :create, :destroy, :show] do
+        collection do
+          get :calendar
+          get :stats
+          get :recent
+        end
+      end
       resources :approvals, only: [:index, :update]
       resources :transport_routes, only: [:index]
       resources :user_transport_routes, only: [:index, :create, :destroy]

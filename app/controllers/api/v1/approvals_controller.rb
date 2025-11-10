@@ -40,31 +40,36 @@ class Api::V1::ApprovalsController < ApplicationController
   def update
     # params[:id] は application_id
     @application = Application.find(params[:id])
-    
+
     # デバッグログ
     Rails.logger.info "=== Approval Debug ==="
     Rails.logger.info "Current user: #{current_api_v1_user.name} (#{current_api_v1_user.role.name})"
     Rails.logger.info "Application user: #{@application.user.name} (#{@application.user.role.name})"
     Rails.logger.info "Application status: #{@application.application_status.name}"
-    
+
     # 権限チェック - applicationを渡す
     # authorize @application, :update?, policy_class: ApprovalPolicy
-    
-    status = params[:status] # "approved" or "rejected"
-    
+
+    status = approval_params[:status]
+    comment = approval_params[:comment]
+
     unless %w[approved rejected].include?(status)
       return render json: { error: 'Invalid status' }, status: :bad_request
+    end
+
+    if status == 'rejected' && comment.blank?
+      return render json: { error: 'Comment is required for rejection' }, status: :bad_request
     end
 
     ActiveRecord::Base.transaction do
       # approvalレコードを作成または更新
       @approval = @application.approvals.find_or_initialize_by(approver_id: current_api_v1_user.id)
       @approval.update!(
-        status: status, 
-        approver_id: current_api_v1_user.id, 
-        comment: params[:comment]
+        status: status,
+        approver_id: current_api_v1_user.id,
+        comment: comment
       )
-      
+
       # applicationのステータスを更新
       # シードデータに合わせて日本語名を使用
       new_status_name = (status == 'approved') ? '承認' : '却下'
@@ -94,5 +99,10 @@ class Api::V1::ApprovalsController < ApplicationController
   end
 
   def destroy
+  end
+  private
+
+  def approval_params
+    params.require(:approval).permit(:status, :comment)
   end
 end

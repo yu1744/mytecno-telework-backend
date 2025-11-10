@@ -41,6 +41,34 @@ class Api::V1::ApplicationsController < ApplicationController
   end
 
   def show
+    @application = Application.includes(
+      { user: :transport_routes },
+      :application_status,
+      { approvals: :approver }
+    ).find(params[:id])
+    authorize @application
+
+    render json: @application.as_json(
+      only: [
+        :id, :date, :work_option, :start_time, :end_time, :reason,
+        :is_overtime, :overtime_reason, :overtime_end, :project, :break_time
+      ],
+      include: {
+        user: {
+          only: [:id, :name],
+          include: {
+            transport_routes: { only: [:id, :name, :cost] }
+          }
+        },
+        application_status: { only: [:id, :name] },
+        approvals: {
+          include: {
+            approver: { only: [:id, :name] }
+          },
+          only: [:id, :status, :comment]
+        }
+      }
+    )
   end
 
   def stats
@@ -72,6 +100,35 @@ class Api::V1::ApplicationsController < ApplicationController
         application_status: { only: [:name] }
       }
     )
+  end
+
+  def calendar
+    year = params[:year].to_i
+    month = params[:month].to_i
+    start_date = Date.new(year, month, 1)
+    end_date = start_date.end_of_month
+
+    applications = policy_scope(Application).where(date: start_date..end_date)
+                                          .includes(:user, :application_status)
+
+    calendar_data = applications.group_by { |a| a.date.to_s }
+                                .transform_values do |apps|
+      {
+        pending: apps.count { |a| a.application_status.name == '申請中' },
+        approved: apps.count { |a| a.application_status.name == '承認' },
+        rejected: apps.count { |a| a.application_status.name == '却下' },
+        total: apps.size,
+        applications: apps.map do |app|
+          {
+            id: app.id,
+            user_name: app.user.name,
+            status: app.application_status.name
+          }
+        end
+      }
+    end
+
+    render json: calendar_data
   end
 
   def create
