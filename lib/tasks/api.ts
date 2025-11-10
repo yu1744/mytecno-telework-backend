@@ -4,14 +4,13 @@ import axios from 'axios';
 import Cookies from 'js-cookie';
 
 const api = axios.create({
-  baseURL: 'http://localhost:3001', // Rails APIのベースURL
+  baseURL: 'http://localhost:3001', 
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// ★★★ リクエスト インターセプタ ★★★
-// リクエストが送信される前に、Cookieから認証情報を読み込んでヘッダーに設定します。
+
 api.interceptors.request.use(
   (config) => {
     const accessToken = Cookies.get('access-token');
@@ -30,9 +29,7 @@ api.interceptors.request.use(
   }
 );
 
-// (推奨) レスポンス インターセプタ
-// devise_token_authはリクエスト毎にトークンを更新するため、
-// レスポンスヘッダーの新しいトークンをCookieに保存し直します。
+
 api.interceptors.response.use(
   (response) => {
     const newAccessToken = response.headers['access-token'];
