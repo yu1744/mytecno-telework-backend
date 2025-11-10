@@ -82,6 +82,57 @@ else
   puts "⏭️  一般ユーザーは既に存在します"
 end
 
+# テストユーザーの作成
+puts "👤 テストユーザーを作成中..."
+
+users_data = [
+  # 代表
+  { employee_number: 'T36837', last_name: '鈴木', first_name: '美咲', department: '直属', group: nil, position: '代表取締役会長', hired_date: '1995-04-01' },
+  { employee_number: 'T36858', last_name: '渡辺', first_name: '大輔', department: '直属', group: nil, position: '代表取締役社長', hired_date: '1995-04-01' },
+  # 部長
+  { employee_number: 'T36830', last_name: '佐藤', first_name: '健', department: '人事総務部', group: nil, position: '部長', hired_date: '1995-04-01' },
+  { employee_number: 'T36851', last_name: '田中', first_name: '優子', department: 'ホールセールシステム開発部', group: nil, position: '部長', hired_date: '1995-04-01' },
+  # グループリーダー
+  { employee_number: 'T36879', last_name: '中村', first_name: '直美', department: '人事総務部', group: '人事グループ', position: 'グループリーダー', hired_date: '1995-04-01' },
+  { employee_number: 'T36886', last_name: '小林', first_name: '真一', department: 'リテールシステム開発部', group: '契約管理システムグループ', position: 'グループリーダー', hired_date: '1995-09-01' },
+  # チーフ
+  { employee_number: 'T36875', last_name: '林', first_name: '優斗', department: 'システム開発推進部', group: 'オープン開発グループ', position: 'チーフ', hired_date: '1995-04-01' },
+  { employee_number: 'T36893', last_name: '加藤', first_name: '美香', department: 'システム開発推進部', group: '青森開発グループ', position: 'チーフ', hired_date: '1995-09-01' },
+  # 一般
+  { employee_number: 'T36882', last_name: '清水', first_name: '由美', department: 'システム開発推進部', group: 'ホスト開発グループ', position: nil, hired_date: '1995-04-01' },
+  { employee_number: 'T36900', last_name: '吉田', first_name: '健二', department: '人事総務部', group: '採用教育グループ', position: nil, hired_date: '1995-12-03' },
+]
+
+users_data.each do |user_data|
+  department = Department.find_or_create_by!(name: user_data[:department])
+  
+  group = nil
+  if user_data[:group]
+    group = Group.find_or_create_by!(name: user_data[:group], department: department)
+  end
+
+  user = User.find_or_initialize_by(employee_number: user_data[:employee_number])
+  if user.new_record?
+    user.assign_attributes(
+      name: "#{user_data[:last_name]} #{user_data[:first_name]}",
+      email: "#{user_data[:employee_number].downcase}@example.com",
+      password: 'password',
+      password_confirmation: 'password',
+      department: department,
+      group: group,
+      position: user_data[:position],
+      hired_date: user_data[:hired_date],
+      is_caregiver: false,
+      has_child_under_elementary: false,
+      role: user_role # 全員userロールを付与
+    )
+    user.save!
+    puts "✅ ユーザー作成: #{user.name}"
+  else
+    puts "⏭️  ユーザーは既に存在します: #{user.name}"
+  end
+end
+
 puts ""
 puts "🎉 シードデータ作成完了！"
 puts ""

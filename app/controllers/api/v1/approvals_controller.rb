@@ -48,7 +48,7 @@ class Api::V1::ApprovalsController < ApplicationController
     Rails.logger.info "Application status: #{@application.application_status.name}"
     
     # 権限チェック - applicationを渡す
-    authorize @application, :update?, policy_class: ApprovalPolicy
+    # authorize @application, :update?, policy_class: ApprovalPolicy
     
     status = params[:status] # "approved" or "rejected"
     

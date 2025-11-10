@@ -5,15 +5,15 @@ Rails.application.routes.draw do
       get "microsoft_graph_auth/authorize"
       get "microsoft_graph_auth/callback"
       mount_devise_token_auth_for 'User', at: 'auth'
-      get 'profile', to: 'users#show'
-      resources :users, only: [:index, :show] do
+      get 'me', to: 'users#me'
+      resources :users, only: [:index, :show, :create, :update, :destroy] do
         member do
-          get 'profile'
           get 'application_limit'
         end
       end
       resources :departments
       resources :roles
+      resources :groups, only: [:index]
       resources :application_statuses
       resources :applications, only: [:index, :create, :destroy]
       get 'applications/stats', to: 'applications#stats'

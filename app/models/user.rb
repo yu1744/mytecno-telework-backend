@@ -7,6 +7,7 @@ class User < ApplicationRecord
   include DeviseTokenAuth::Concerns::User
   belongs_to :role
   belongs_to :department
+  belongs_to :group, optional: true
 
   has_many :applications
   has_many :approvals, foreign_key: :approver_id
@@ -32,5 +33,11 @@ class User < ApplicationRecord
 
   def admin?
     role_name == 'admin'
+  end
+
+  def years_of_service
+    return 0 unless hired_date
+
+    (Date.current - hired_date).to_i / 365
   end
 end

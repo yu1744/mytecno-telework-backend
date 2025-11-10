@@ -12,4 +12,45 @@ class Application < ApplicationRecord
   validates :reason, presence: true, if: :is_special?
   validates :overtime_reason, presence: true, if: :is_overtime?
   validates :overtime_end, presence: true, if: :is_overtime?
+
+  validate :validate_application_limit, on: :create
+
+  private
+
+  def validate_application_limit
+    return unless user && date
+
+    # 育児・介護対象者の場合、月間上限をチェック
+    if user.is_caregiver? || user.has_child_under_elementary?
+      start_of_month = date.beginning_of_month
+      end_of_month = date.end_of_month
+      monthly_applications = user.applications.where(date: start_of_month..end_of_month)
+
+      monthly_application_count = monthly_applications.reduce(0) do |sum, app|
+        sum + (app.work_option == 'full_day' ? 1 : 0.5)
+      end
+
+      if monthly_application_count >= 10
+        errors.add(:base, '月間の申請上限を超えています。')
+        return # 月間上限に達していれば週の上限チェックは不要
+      end
+    end
+
+    # 週の申請上限チェック（全ユーザー共通）
+    start_of_week = date.beginning_of_week(:monday)
+    end_of_week = date.end_of_week(:monday)
+    weekly_applications = user.applications.where(date: start_of_week..end_of_week)
+
+    limit = if user.years_of_service >= 3
+              2
+            else
+              1
+            end
+
+    weekly_application_count = weekly_applications.reduce(0) do |sum, app|
+      sum + (app.work_option == 'full_day' ? 1 : 0.5)
+    end
+
+    errors.add(:base, '週の申請上限を超えています。') if weekly_application_count >= limit
+  end
 end
