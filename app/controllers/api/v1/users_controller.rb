@@ -47,7 +47,14 @@ class Api::V1::UsersController < ApplicationController
 
   def update
     user = User.find(params[:id])
-    if user.update(user_params)
+
+    # 認可: 管理者はすべてのユーザーを更新でき、一般ユーザーは自分自身のみ更新できる
+    unless current_api_v1_user.admin? || current_api_v1_user.id == user.id
+      render json: { error: 'Not Authorized' }, status: :forbidden
+      return
+    end
+
+    if user.update(update_params)
       render json: user
     else
       render json: user.errors, status: :unprocessable_entity
@@ -62,10 +69,24 @@ class Api::V1::UsersController < ApplicationController
 
   private
 
-  def user_params
+  def update_params
+    if current_api_v1_user.admin?
+      admin_user_params
+    else
+      general_user_params
+    end
+  end
+
+  def general_user_params
     params.require(:user).permit(
-      :name, :email, :password, :password_confirmation, :employee_number,
-      :department_id, :role_id, :group_id, :position, :is_caregiver, :has_child_under_elementary
+      :name, :email, :address, :phone_number, :password, :password_confirmation
+    )
+  end
+
+  def admin_user_params
+    params.require(:user).permit(
+      :name, :email, :address, :phone_number, :password, :password_confirmation,
+      :department_id, :role_id, :employee_number, :manager_id
     )
   end
 end
