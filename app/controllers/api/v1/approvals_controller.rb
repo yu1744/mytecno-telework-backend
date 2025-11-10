@@ -5,7 +5,7 @@ class Api::V1::ApprovalsController < ApplicationController
     authorize :approval, :index?
 
     subordinate_ids = current_api_v1_user.subordinates.pluck(:id)
-    applications = Application.where(user_id: subordinate_ids, application_status_id: 1) # 1: pending
+    applications = Application.where(user_id: subordinate_ids, application_status_id: 1) 
 
     render json: applications, include: [:user, :application_status]
   end
@@ -13,17 +13,19 @@ class Api::V1::ApprovalsController < ApplicationController
   def show
   end
 
+ 
   def create
   end
 
+
   def update
+    ##あ
     authorize :approval, :update?
 
     application = Application.find(params[:id])
-    status_name = params[:status] # "approved" or "rejected"
+    status_name = params[:status] 
     comment = params[:comment]
 
-    # "approved" => 2, "rejected" => 3
     new_status_id = ApplicationStatus.find_by(name: status_name).id
 
     ActiveRecord::Base.transaction do
@@ -45,3 +47,4 @@ class Api::V1::ApprovalsController < ApplicationController
   def destroy
   end
 end
+

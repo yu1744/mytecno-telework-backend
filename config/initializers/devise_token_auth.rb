@@ -63,4 +63,12 @@ DeviseTokenAuth.setup do |config|
   # devise confirmable module. If you want to use devise confirmable module and
   # send email, set it to true. (This is a setting for compatibility)
   # config.send_confirmation_email = true
+
+  # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
+  # ★★★ この行を追加 ★★★
+  #
+  # By default, devise_token_auth will use session storage to track sign
+  # in status. Set this to true to prevent this behavior (APIモードでは true に設定)
+  config.bypass_sign_in = false
+  # ★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★★
 end

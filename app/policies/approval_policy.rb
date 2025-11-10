@@ -1,10 +1,10 @@
 class ApprovalPolicy < ApplicationPolicy
   def index?
-    user.approver?
+    user.approver? || user.admin?
   end
 
   def update?
-    user.approver?
+    user.approver? || user.admin?
   end
 
   class Scope < Scope
