@@ -8,6 +8,8 @@ class User < ApplicationRecord
   belongs_to :role
   belongs_to :department
   belongs_to :group, optional: true
+  belongs_to :approver, class_name: 'User', foreign_key: 'approver_id', optional: true
+  has_many :subordinates, class_name: 'User', foreign_key: 'approver_id'
 
   has_many :applications
   has_many :approvals, foreign_key: :approver_id

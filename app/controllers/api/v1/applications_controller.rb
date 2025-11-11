@@ -3,13 +3,26 @@ class Api::V1::ApplicationsController < ApplicationController
 
   def index
     Rails.logger.info "Current user role: #{current_api_v1_user.role.name}"
-    @applications = policy_scope(Application).includes(user: :department).includes(:application_status)
+    @applications = policy_scope(Application)
+
+    if current_api_v1_user.role.name == 'admin'
+      # adminはすべての申請を閲覧可能
+      @applications = @applications.all
+    elsif current_api_v1_user.role.name == 'approver'
+      # approverは部下の申請を閲覧可能
+      @applications = @applications.where(user_id: current_api_v1_user.subordinates.pluck(:id))
+    else
+      # 一般ユーザーは自分の申請のみ閲覧可能
+      @applications = @applications.where(user_id: current_api_v1_user.id)
+    end
+
+    @applications = @applications.includes(user: :department).includes(:application_status)
 
     # Filtering
     if params[:filter_by_status].present?
       @applications = @applications.where(application_status_id: params[:filter_by_status])
     end
-    if params[:filter_by_user].present? && current_api_v1_user.role.name == 'admin'
+    if params[:filter_by_user].present? && current_api_v1_user.admin?
       @applications = @applications.where(user_id: params[:filter_by_user])
     end
 

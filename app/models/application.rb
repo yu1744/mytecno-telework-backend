@@ -15,6 +15,19 @@ class Application < ApplicationRecord
 
   validate :validate_application_limit, on: :create
 
+  def approvable_by?(user)
+    # 申請者自身は承認できない
+    return false if user == self.user
+
+    # 管理者は常に承認できる
+    return true if user.admin?
+
+    # 承認者の条件をすべて満たすかチェック
+    user.approver? &&
+      user.department == self.user.department &&
+      self.user.approver == user
+  end
+
   private
 
   def validate_application_limit

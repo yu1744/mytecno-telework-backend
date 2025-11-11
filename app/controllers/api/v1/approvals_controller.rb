@@ -41,6 +41,11 @@ class Api::V1::ApprovalsController < ApplicationController
     # params[:id] は application_id
     @application = Application.find(params[:id])
 
+    # 権限チェック
+    unless @application.approvable_by?(current_api_v1_user)
+      return render json: { error: 'この申請を承認する権限がありません。' }, status: :forbidden
+    end
+
     # デバッグログ
     Rails.logger.info "=== Approval Debug ==="
     Rails.logger.info "Current user: #{current_api_v1_user.name} (#{current_api_v1_user.role.name})"
