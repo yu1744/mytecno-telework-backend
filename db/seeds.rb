@@ -21,6 +21,7 @@ approver.update!(
   department: dev_department,
   role: approver_role,
   hired_date: '2020-04-01',
+  manager: admin,
   confirmed_at: Time.now
 )
 
