@@ -13,7 +13,7 @@ class ApplicationPolicy
   end
 
   def show?
-    false
+    user.admin? || record.user_id == user.id
   end
 
   def create?

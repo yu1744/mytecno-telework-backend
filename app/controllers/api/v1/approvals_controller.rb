@@ -15,6 +15,9 @@ class Api::V1::ApprovalsController < ApplicationController
         []
       end
 
+    # Exclude applications from the current user
+    applications = applications.where.not(user_id: current_api_v1_user.id) if applications.respond_to?(:where)
+
     # Sorting
     sort_column = params[:sort_by].in?(%w[created_at date status]) ? params[:sort_by] : 'created_at'
     sort_direction = params[:sort_order].in?(%w[asc desc]) ? params[:sort_order] : 'desc'
@@ -83,11 +86,13 @@ class Api::V1::ApprovalsController < ApplicationController
 
       # 通知を作成
       status_ja = (status == 'approved') ? '承認' : '却下'
-      message = "あなたの申請「#{@application.date}」が#{current_api_v1_user.name}によって#{status_ja}されました。"
+      application_type = @application.application_type
+      message = "#{application_type}が#{current_api_v1_user.name}によって#{status_ja}されました。"
       Notification.create!(
         user: @application.user,
         message: message,
-        link: "/history" # フロントエンドの申請履歴ページへのリンク
+        link: '/history',
+        read: false
       )
     end
 

@@ -2,19 +2,7 @@ class Api::V1::ApplicationsController < ApplicationController
   before_action :authenticate_api_v1_user!
 
   def index
-    Rails.logger.info "Current user role: #{current_api_v1_user.role.name}"
-    @applications = policy_scope(Application)
-
-    if current_api_v1_user.role.name == 'admin'
-      # adminはすべての申請を閲覧可能
-      @applications = @applications.all
-    elsif current_api_v1_user.role.name == 'approver'
-      # approverは部下の申請を閲覧可能
-      @applications = @applications.where(user_id: current_api_v1_user.subordinates.pluck(:id))
-    else
-      # 一般ユーザーは自分の申請のみ閲覧可能
-      @applications = @applications.where(user_id: current_api_v1_user.id)
-    end
+    @applications = current_api_v1_user.applications
 
     @applications = @applications.includes(user: :department).includes(:application_status)
 

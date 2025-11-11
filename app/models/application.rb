@@ -28,6 +28,19 @@ class Application < ApplicationRecord
       self.user.approver == user
   end
 
+  def application_type
+    case work_option
+    when 'full_day'
+      '在宅勤務申請（終日）'
+    when 'am_half'
+      '在宅勤務申請（午前半休）'
+    when 'pm_half'
+      '在宅勤務申請（午後半休）'
+    else
+      '在宅勤務申請'
+    end
+  end
+
   private
 
   def validate_application_limit

@@ -5,7 +5,8 @@ module Api
       class ApplicationsController < ApplicationController
         # GET /api/v1/admin/applications
         def index
-          @applications = policy_scope([:admin, Application]).includes(:user, :application_status)
+          authorize([:admin, Application])
+          @applications = Application.includes(:user, :application_status)
 
           # Filtering
           @applications = @applications.where(application_status_id: params[:status]) if params[:status].present?

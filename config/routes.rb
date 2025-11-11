@@ -1,7 +1,9 @@
 Rails.application.routes.draw do
   namespace :api do
     namespace :v1 do
-      resources :notifications, only: [:index, :update]
+      resources :notifications, only: [:index, :update] do
+        get :unread, on: :collection
+      end
       get "microsoft_graph_auth/authorize"
       get "microsoft_graph_auth/callback"
       mount_devise_token_auth_for 'User', at: 'auth'
