@@ -29,6 +29,8 @@ class Api::V1::ApprovalsController < ApplicationController
         id: app.id,
         date: app.date,
         reason: app.reason,
+        start_time:app.start_time,
+        end_time:app.end_time,
         is_special_case:app.is_special_case,
         special_reason:app.special_reason,
         user: {
