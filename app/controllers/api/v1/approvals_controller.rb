@@ -10,10 +10,10 @@ class Api::V1::ApprovalsController < ApplicationController
                               .where(user_id: subordinate_ids, application_status_id: 1)
                               .order(date: :desc)
 
-    # 修正箇所: commentがnilのapprovalのみを取得してカウント対象にする
+                              
     approval_data = Approval.joins(:application)
                             .where(applications: { user_id: subordinate_ids })
-                            .where(comment: nil) 
+                            .where(comment: [nil, ""]) 
                             .pluck('applications.user_id', 'applications.date')
 
     weekly_approval_counts = approval_data.each_with_object(Hash.new(0)) do |(user_id, date), counts|
