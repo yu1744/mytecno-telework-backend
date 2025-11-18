@@ -6,8 +6,10 @@ class Api::V1::ApprovalsController < ApplicationController
 
     applications =
       if current_api_v1_user.role.name == 'admin'
+        # 管理者: すべての部署のすべての申請（ただし申請中のもの）
         Application.pending
       elsif current_api_v1_user.role.name == 'approver'
+        # 承認者: 自分の部署のすべての申請（ただし申請中のもの）
         department_id = current_api_v1_user.department_id
         user_ids = User.where(department_id: department_id).pluck(:id)
         Application.pending.where(user_id: user_ids)
@@ -15,7 +17,7 @@ class Api::V1::ApprovalsController < ApplicationController
         []
       end
 
-    # Exclude applications from the current user
+    # 申請者自身の申請は除外
     applications = applications.where.not(user_id: current_api_v1_user.id) if applications.respond_to?(:where)
 
     # Sorting
@@ -31,7 +33,14 @@ class Api::V1::ApprovalsController < ApplicationController
                    end
     applications = applications.order(Arel.sql(order_clause))
 
-    render json: applications, include: %i[user application_status]
+    render json: applications.as_json(
+      include: {
+        user: { only: %i[id name] },
+        application_status: { only: [:name] }
+      },
+      methods: %i[is_special_appointment work_hours_exceeded],
+      only: %i[id date reason application_status_id]
+    )
   end
 
   def show
@@ -106,6 +115,22 @@ class Api::V1::ApprovalsController < ApplicationController
     Rails.logger.error "Error in approval update: #{e.message}"
     Rails.logger.error e.backtrace.join("\n")
     render json: { error: e.message }, status: :unprocessable_entity
+  end
+
+  def pending_count
+    authorize :approval, :index?
+
+    count = if current_api_v1_user.role.name == 'admin'
+      Application.pending.count
+    elsif current_api_v1_user.role.name == 'approver'
+      department_id = current_api_v1_user.department_id
+      user_ids = User.where(department_id: department_id).pluck(:id)
+      Application.pending.where(user_id: user_ids).where.not(user_id: current_api_v1_user.id).count
+    else
+      0
+    end
+
+    render json: { pending_count: count }
   end
 
   def destroy

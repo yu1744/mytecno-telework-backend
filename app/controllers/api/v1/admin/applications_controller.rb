@@ -19,7 +19,14 @@ module Api
           sort_direction = params[:sort_order].in?(%w[asc desc]) ? params[:sort_order] : 'desc'
           @applications = @applications.order("#{sort_column} #{sort_direction}")
 
-          render json: @applications, include: [:user, :application_status]
+          render json: @applications.as_json(
+            include: {
+              user: { only: %i[id name] },
+              application_status: { only: [:name] }
+            },
+            methods: %i[is_special_appointment work_hours_exceeded],
+            only: %i[id date reason]
+          )
         end
 
         # GET /api/v1/admin/applications/export_csv

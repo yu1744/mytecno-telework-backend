@@ -27,18 +27,23 @@ class Api::V1::ApplicationsController < ApplicationController
                    end
     @applications = @applications.order(Arel.sql(order_clause))
 
-    render json: @applications.as_json(
-      only: [:id, :reason, :created_at, :date, :application_status_id],
-      include: {
-        user: {
-          only: [:name],
-          include: {
-            department: { only: [:name] }
-          }
+      render json: @applications.as_json(
+        only: [
+          :id, :reason, :created_at, :date, :application_status_id,
+          :work_option, :start_time, :end_time, :is_special, :special_reason,
+          :is_overtime, :overtime_reason, :overtime_end
+        ],
+        include: {
+          user: {
+            only: [:name],
+            include: {
+              department: { only: [:name] }
+            }
+          },
+          application_status: { only: [:name] }
         },
-        application_status: { only: [:name] }
-      }
-    )
+        methods: [:application_type]
+      )
   end
 
   def show
@@ -49,27 +54,28 @@ class Api::V1::ApplicationsController < ApplicationController
     ).find(params[:id])
     authorize @application
 
-    render json: @application.as_json(
-      only: [
-        :id, :date, :work_option, :start_time, :end_time, :reason,
-        :is_overtime, :overtime_reason, :overtime_end, :project, :break_time
-      ],
-      include: {
-        user: {
-          only: [:id, :name],
-          include: {
-            transport_routes: { only: [:id, :name, :cost] }
-          }
-        },
-        application_status: { only: [:id, :name] },
-        approvals: {
-          include: {
-            approver: { only: [:id, :name] }
+      render json: @application.as_json(
+        only: [
+          :id, :date, :work_option, :start_time, :end_time, :reason,
+          :is_special, :special_reason, :is_overtime, :overtime_reason, :overtime_end,
+          :project, :break_time
+        ],
+        include: {
+          user: {
+            only: [:id, :name],
+            include: {
+              transport_routes: { only: [:id, :name, :cost] }
+            }
           },
-          only: [:id, :status, :comment]
+          application_status: { only: [:id, :name] },
+          approvals: {
+            include: {
+              approver: { only: [:id, :name] }
+            },
+            only: [:id, :status, :comment]
+          }
         }
-      }
-    )
+      )
   end
 
   def stats
@@ -88,18 +94,22 @@ class Api::V1::ApplicationsController < ApplicationController
   end
 
   def recent
-    # ログインユーザーが申請した、または承認者として関わっている最新5件の申請を取得
-    applications = Application.where(user_id: current_api_v1_user.id)
-                               .or(Application.where(id: Approval.where(approver_id: current_api_v1_user.id).select(:application_id)))
-                              .order(created_at: :desc)
-                              .limit(5)
-                              .includes(:user, :application_status)
+    # policy_scope を使用して、権限に応じた最新10件の申請を取得
+    applications = policy_scope(Application).order(created_at: :desc)
+                                           .limit(10)
+                                           .includes(:user, :application_status)
     
     render json: applications.as_json(
+      only: [
+        :id, :date, :created_at, :work_option, :start_time, :end_time,
+        :is_special, :special_reason, :reason, :is_overtime, :overtime_reason,
+        :overtime_end, :application_status_id
+      ],
       include: {
         user: { only: [:name] },
         application_status: { only: [:name] }
-      }
+      },
+      methods: [:application_type]
     )
   end
 
@@ -112,18 +122,24 @@ class Api::V1::ApplicationsController < ApplicationController
     applications = policy_scope(Application).where(date: start_date..end_date)
                                           .includes(:user, :application_status)
 
+    Rails.logger.debug "Found #{applications.count} applications for #{month}/#{year}"
+    applications.each do |app|
+      Rails.logger.debug "Application ID: #{app.id}, Status: #{app.application_status.name}"
+    end
+
     calendar_data = applications.group_by { |a| a.date.to_s }
                                 .transform_values do |apps|
       {
-        pending: apps.count { |a| a.application_status.name == '申請中' },
-        approved: apps.count { |a| a.application_status.name == '承認' },
-        rejected: apps.count { |a| a.application_status.name == '却下' },
+        pending: apps.count { |a| a.application_status_id == 1 },
+        approved: apps.count { |a| a.application_status_id == 2 },
+        rejected: apps.count { |a| a.application_status_id == 3 },
         total: apps.size,
         applications: apps.map do |app|
+          status_map = { 1 => 'pending', 2 => 'approved', 3 => 'rejected', 4 => 'canceled' }
           {
             id: app.id,
             user_name: app.user.name,
-            status: app.application_status.name
+            status: status_map[app.application_status_id] || 'unknown'
           }
         end
       }
@@ -135,11 +151,18 @@ class Api::V1::ApplicationsController < ApplicationController
   def create
     application = current_api_v1_user.applications.build(application_params)
     application.application_status_id = 1 # 1: "申請中"
+    application.skip_limit_check = application_params[:skip_limit_check] == 'true' || application_params[:skip_limit_check] == true
 
     if application.save
       render json: application, status: :created
     else
-      render json: application.errors, status: :unprocessable_entity
+      # 上限チェックエラーか判定
+      is_limit_error = application.errors.messages[:base]&.any? { |msg| msg.include?('申請上限') }
+      
+      render json: { 
+        errors: application.errors.full_messages,
+        is_limit_error: is_limit_error
+      }, status: :unprocessable_entity
     end
   end
 
@@ -164,6 +187,10 @@ class Api::V1::ApplicationsController < ApplicationController
   private
   
   def application_params
-    params.require(:application).permit(:date, :reason, :work_option, :start_time, :end_time, :is_special, :is_overtime, :overtime_reason, :overtime_end)
+    params.require(:application).permit(
+      :date, :reason, :work_option, :start_time, :end_time,
+      :is_special, :special_reason, :is_overtime, :overtime_reason, :overtime_end,
+      :skip_limit_check
+    )
   end
 end

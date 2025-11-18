@@ -24,7 +24,11 @@ Rails.application.routes.draw do
           get :recent
         end
       end
-      resources :approvals, only: [:index, :update]
+      resources :approvals, only: [:index, :update] do
+        collection do
+          get :pending_count
+        end
+      end
       resources :transport_routes, only: [:index]
       resources :user_transport_routes, only: [:index, :create, :destroy]
 

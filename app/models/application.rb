@@ -7,9 +7,13 @@ class Application < ApplicationRecord
   # application_status_id: 1は「申請中」
   scope :pending, -> { where(application_status_id: 1) }
 
+  # メモリ内フラグ（DBに保存されない）
+  attr_accessor :skip_limit_check
+
   validates :date, presence: true
   validates :work_option, presence: true, inclusion: { in: %w[full_day am_half pm_half] }
   validates :reason, presence: true, if: :is_special?
+  validates :special_reason, presence: true, if: :is_special?
   validates :overtime_reason, presence: true, if: :is_overtime?
   validates :overtime_end, presence: true, if: :is_overtime?
 
@@ -22,7 +26,8 @@ class Application < ApplicationRecord
     # 管理者は常に承認できる
     return true if user.admin?
 
-    # 承認者の条件をすべて満たすかチェック
+    # 承認者は自分の部署の申請のみ承認可能
+    # かつ、申請者の上司である必要がある
     user.approver? &&
       user.department == self.user.department &&
       self.user.approver == user
@@ -41,9 +46,22 @@ class Application < ApplicationRecord
     end
   end
 
+  def is_special_appointment
+    special_reason.present?
+  end
+
+  def work_hours_exceeded
+    return false unless overtime_end.present?
+
+    # 想定される勤務時間は8時間
+    work_duration = (overtime_end.to_time - 9.hours).to_i
+    work_duration > 8 * 3600
+  end
+
   private
 
   def validate_application_limit
+    return if skip_limit_check
     return unless user && date
 
     # 育児・介護対象者の場合、月間上限をチェック
