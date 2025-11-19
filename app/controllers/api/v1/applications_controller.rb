@@ -2,7 +2,17 @@ class Api::V1::ApplicationsController < ApplicationController
   before_action :authenticate_api_v1_user!
 
   def index
-    @applications = current_api_v1_user.applications
+    if current_api_v1_user.role&.name == 'user' || current_api_v1_user.role&.name.nil?
+      @applications = Application.where(user_id: current_api_v1_user.id)
+    elsif current_api_v1_user.role&.name == 'approver'
+      department_users = User.where(department_id: current_api_v1_user.department_id)
+      @applications = Application.where(user_id: department_users.select(:id))
+    else
+      department_users = User.where(department_id: current_api_v1_user.department_id)
+      @applications = Application.where(user_id: department_users.select(:id))
+                                   .or(Application.where(id: Approval.where(approver_id: current_api_v1_user.id).select(:application_id)))
+                                   .distinct
+    end
 
     @applications = @applications.includes(user: :department).includes(:application_status)
 

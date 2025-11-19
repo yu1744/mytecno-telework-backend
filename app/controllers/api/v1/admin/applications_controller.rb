@@ -6,7 +6,7 @@ module Api
         # GET /api/v1/admin/applications
         def index
           authorize([:admin, Application])
-          @applications = Application.includes(:user, :application_status)
+          @applications = policy_scope([:admin, Application]).includes(:user, :application_status)
 
           # Filtering
           @applications = @applications.where(application_status_id: params[:status]) if params[:status].present?
@@ -17,6 +17,7 @@ module Api
           # Sorting
           sort_column = params[:sort_by].in?(%w[created_at start_date end_date]) ? params[:sort_by] : 'created_at'
           sort_direction = params[:sort_order].in?(%w[asc desc]) ? params[:sort_order] : 'desc'
+          sort_column = "applications.#{sort_column}" if sort_column == 'created_at'
           @applications = @applications.order("#{sort_column} #{sort_direction}")
 
           render json: @applications.as_json(

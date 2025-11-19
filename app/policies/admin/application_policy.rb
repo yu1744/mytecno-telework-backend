@@ -2,7 +2,17 @@ module Admin
   class ApplicationPolicy < ::ApplicationPolicy
     class Scope < Scope
       def resolve
-        scope.all
+        if user.admin?
+          scope.all
+        elsif user.role.name == 'approver'
+          if user.department
+            scope.joins(:user).where(users: { department_id: user.department_id })
+          else
+            scope.none
+          end
+        else
+          scope.none
+        end
       end
     end
 
