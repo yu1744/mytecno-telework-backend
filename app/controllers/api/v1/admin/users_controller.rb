@@ -7,11 +7,12 @@ module Api
         # GET /api/v1/admin/users
         def index
           authorize([:admin, User])
-          @users = User.includes(:department, :role)
+          @users = User.includes(:department, :role, :group)
           render json: @users.as_json(
             include: {
               department: { only: [:id, :name] },
-              role: { only: [:id, :name] }
+              role: { only: [:id, :name] },
+              group: { only: [:id, :name] }
             },
             methods: [:hired_date]
           )
@@ -23,7 +24,8 @@ module Api
           render json: @user.as_json(
             include: {
               department: { only: [:id, :name] },
-              role: { only: [:id, :name] }
+              role: { only: [:id, :name] },
+              group: { only: [:id, :name] }
             },
             methods: [:hired_date]
           )
@@ -37,7 +39,8 @@ module Api
             render json: @user.as_json(
               include: {
                 department: { only: [:id, :name] },
-                role: { only: [:id, :name] }
+                role: { only: [:id, :name] },
+                group: { only: [:id, :name] }
               },
               methods: [:hired_date]
             ), status: :created
@@ -54,7 +57,8 @@ module Api
             render json: @user.as_json(
               include: {
                 department: { only: [:id, :name] },
-                role: { only: [:id, :name] }
+                role: { only: [:id, :name] },
+                group: { only: [:id, :name] }
               },
               methods: [:hired_date]
             )
@@ -86,7 +90,11 @@ module Api
             :department_id,
             :role_id,
             :manager_id,
-            :hired_date
+            :hired_date,
+            :group_id,
+            :position,
+            :is_caregiver,
+            :has_child_under_elementary
           )
         end
       end

@@ -6,14 +6,19 @@ class Api::V1::ApprovalsController < ApplicationController
 
     applications =
       if current_api_v1_user.role.name == 'admin'
+        # 管理者: すべての部署のすべての申請（ただし申請中のもの）
         Application.pending
       elsif current_api_v1_user.role.name == 'approver'
+        # 承認者: 自分の部署のすべての申請（ただし申請中のもの）
         department_id = current_api_v1_user.department_id
         user_ids = User.where(department_id: department_id).pluck(:id)
         Application.pending.where(user_id: user_ids)
       else
         []
       end
+
+    # 申請者自身の申請は除外
+    applications = applications.where.not(user_id: current_api_v1_user.id) if applications.respond_to?(:where)
 
     # Sorting
     sort_column = params[:sort_by].in?(%w[created_at date status]) ? params[:sort_by] : 'created_at'
@@ -28,7 +33,14 @@ class Api::V1::ApprovalsController < ApplicationController
                    end
     applications = applications.order(Arel.sql(order_clause))
 
-    render json: applications, include: %i[user application_status]
+    render json: applications.as_json(
+      include: {
+        user: { only: %i[id name] },
+        application_status: { only: [:name] }
+      },
+      methods: %i[is_special_appointment work_hours_exceeded],
+      only: %i[id date reason application_status_id]
+    )
   end
 
   def show
@@ -40,31 +52,41 @@ class Api::V1::ApprovalsController < ApplicationController
   def update
     # params[:id] は application_id
     @application = Application.find(params[:id])
-    
+
+    # 権限チェック
+    unless @application.approvable_by?(current_api_v1_user)
+      return render json: { error: 'この申請を承認する権限がありません。' }, status: :forbidden
+    end
+
     # デバッグログ
     Rails.logger.info "=== Approval Debug ==="
     Rails.logger.info "Current user: #{current_api_v1_user.name} (#{current_api_v1_user.role.name})"
     Rails.logger.info "Application user: #{@application.user.name} (#{@application.user.role.name})"
     Rails.logger.info "Application status: #{@application.application_status.name}"
-    
+
     # 権限チェック - applicationを渡す
-    authorize @application, :update?, policy_class: ApprovalPolicy
-    
-    status = params[:status] # "approved" or "rejected"
-    
+    # authorize @application, :update?, policy_class: ApprovalPolicy
+
+    status = approval_params[:status]
+    comment = approval_params[:comment]
+
     unless %w[approved rejected].include?(status)
       return render json: { error: 'Invalid status' }, status: :bad_request
+    end
+
+    if status == 'rejected' && comment.blank?
+      return render json: { error: 'Comment is required for rejection' }, status: :bad_request
     end
 
     ActiveRecord::Base.transaction do
       # approvalレコードを作成または更新
       @approval = @application.approvals.find_or_initialize_by(approver_id: current_api_v1_user.id)
       @approval.update!(
-        status: status, 
-        approver_id: current_api_v1_user.id, 
-        comment: params[:comment]
+        status: status,
+        approver_id: current_api_v1_user.id,
+        comment: comment
       )
-      
+
       # applicationのステータスを更新
       # シードデータに合わせて日本語名を使用
       new_status_name = (status == 'approved') ? '承認' : '却下'
@@ -73,11 +95,13 @@ class Api::V1::ApprovalsController < ApplicationController
 
       # 通知を作成
       status_ja = (status == 'approved') ? '承認' : '却下'
-      message = "あなたの申請「#{@application.date}」が#{current_api_v1_user.name}によって#{status_ja}されました。"
+      application_type = @application.application_type
+      message = "#{application_type}が#{current_api_v1_user.name}によって#{status_ja}されました。"
       Notification.create!(
         user: @application.user,
         message: message,
-        link: "/history" # フロントエンドの申請履歴ページへのリンク
+        link: '/history',
+        read: false
       )
     end
 
@@ -93,6 +117,27 @@ class Api::V1::ApprovalsController < ApplicationController
     render json: { error: e.message }, status: :unprocessable_entity
   end
 
+  def pending_count
+    authorize :approval, :index?
+
+    count = if current_api_v1_user.role.name == 'admin'
+      Application.pending.count
+    elsif current_api_v1_user.role.name == 'approver'
+      department_id = current_api_v1_user.department_id
+      user_ids = User.where(department_id: department_id).pluck(:id)
+      Application.pending.where(user_id: user_ids).where.not(user_id: current_api_v1_user.id).count
+    else
+      0
+    end
+
+    render json: { pending_count: count }
+  end
+
   def destroy
+  end
+  private
+
+  def approval_params
+    params.require(:approval).permit(:status, :comment)
   end
 end

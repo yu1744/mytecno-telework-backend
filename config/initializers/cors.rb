@@ -7,7 +7,10 @@
 
 Rails.application.config.middleware.insert_before 0, Rack::Cors do
   allow do
-    origins "http://localhost:3000"
+    # ホスト環境とコンテナ環境の両方をサポート
+    origins "localhost:3000", "127.0.0.1:3000", "localhost", "127.0.0.1", 
+            "http://localhost:3000", "http://127.0.0.1:3000",
+            "frontend", "172.18.0.4" # Docker のコンテナネットワークIP
 
     resource "*",
       headers: :any,
