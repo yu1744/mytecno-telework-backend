@@ -1,17 +1,56 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+admin_user:
+  name: Admin User
+  email: admin@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password') %>
+  role: admin
+  department: dev
+  uid: admin@example.com
+  provider: email
 
-one:
-  name: MyString
-  email: MyString
-  password_digest: MyString
-  hired_date: 2025-10-06
-  role: one
-  department: one
+manager_user:
+  name: Manager User
+  email: manager@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password') %>
+  role: approver
+  department: dev
+  uid: manager@example.com
+  provider: email
 
-two:
-  name: MyString
-  email: MyString
-  password_digest: MyString
-  hired_date: 2025-10-06
-  role: two
-  department: two
+approver_user:
+  name: Approver User
+  email: approver@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password') %>
+  role: approver
+  department: dev
+  uid: approver@example.com
+  provider: email
+
+other_dept_manager:
+  name: Other Manager
+  email: other_manager@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password') %>
+  role: approver
+  department: sales
+  uid: other_manager@example.com
+  provider: email
+
+applicant_user:
+  name: Applicant User
+  email: applicant@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password') %>
+  role: general
+  department: dev
+  manager: manager_user
+  approver: approver_user
+  uid: applicant@example.com
+  provider: email
+  hired_date: 2020-01-01
+
+unrelated_user:
+  name: Unrelated User
+  email: unrelated@example.com
+  encrypted_password: <%= Devise::Encryptor.digest(User, 'password') %>
+  role: general
+  department: dev
+  uid: unrelated@example.com
+  provider: email

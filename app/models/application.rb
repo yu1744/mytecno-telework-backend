@@ -27,10 +27,10 @@ class Application < ApplicationRecord
     return true if user.admin?
 
     # 承認者は自分の部署の申請のみ承認可能
-    # かつ、申請者の上司である必要がある
+    # かつ、申請者の上司（manager または approver）である必要がある
     user.approver? &&
       user.department == self.user.department &&
-      self.user.approver == user
+      (self.user.manager == user || self.user.approver == user)
   end
 
   def application_type

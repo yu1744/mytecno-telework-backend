@@ -1,7 +1,7 @@
-# Read about fixtures at https://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+pending:
+  id: 1
+  name: 申請中
 
-one:
-  name: MyString
-
-two:
-  name: MyString
+approved:
+  id: 2
+  name: 承認済み
