@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.0].define(version: 2025_11_11_012843) do
+ActiveRecord::Schema[8.0].define(version: 2025_11_20_114900) do
   create_table "application_statuses", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
     t.string "name"
     t.datetime "created_at", null: false
@@ -71,6 +71,17 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_012843) do
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
     t.index ["user_id"], name: "index_notifications_on_user_id"
+  end
+
+  create_table "push_subscriptions", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
+    t.bigint "user_id", null: false
+    t.string "endpoint", null: false
+    t.text "p256dh_key", null: false
+    t.text "auth_key", null: false
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["user_id", "endpoint"], name: "index_push_subscriptions_on_user_id_and_endpoint", unique: true
+    t.index ["user_id"], name: "index_push_subscriptions_on_user_id"
   end
 
   create_table "roles", charset: "utf8mb4", collation: "utf8mb4_unicode_ci", force: :cascade do |t|
@@ -158,6 +169,7 @@ ActiveRecord::Schema[8.0].define(version: 2025_11_11_012843) do
   add_foreign_key "approvals", "users", column: "approver_id"
   add_foreign_key "groups", "departments"
   add_foreign_key "notifications", "users"
+  add_foreign_key "push_subscriptions", "users"
   add_foreign_key "user_info_changes", "departments", column: "new_department_id"
   add_foreign_key "user_info_changes", "roles", column: "new_role_id"
   add_foreign_key "user_info_changes", "users"

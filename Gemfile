@@ -55,3 +55,5 @@ gem 'pundit'
 gem 'microsoft_graph'
 
 gem 'groupdate'
+
+gem 'webpush'

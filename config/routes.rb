@@ -32,6 +32,13 @@ Rails.application.routes.draw do
       resources :transport_routes, only: [:index]
       resources :user_transport_routes, only: [:index, :create, :destroy]
 
+      # プッシュ通知
+      resources :push_subscriptions, only: [:create, :destroy] do
+        collection do
+          get :vapid_public_key
+        end
+      end
+
       namespace :admin do
         resources :users, only: [:index, :create, :update, :destroy, :show]
         resources :applications, only: [:index] do

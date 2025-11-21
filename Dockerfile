@@ -9,7 +9,8 @@ RUN apk add --no-cache \
     mariadb-client \
     tzdata \
     bash \
-    wget
+    wget \
+    gcompat
 
 # 依存関係のインストール（BuildKitキャッシュマウント活用）
 FROM base AS deps
@@ -30,7 +31,8 @@ COPY --from=deps /usr/local/bundle /usr/local/bundle
 COPY . .
 
 # bootsnap用のディレクトリ作成
-RUN mkdir -p /tmp/bootsnap
+RUN mkdir -p /tmp/bootsnap && \
+    rm -rf tmp/* log/*
 
 # Rails環境変数
 ENV RAILS_ENV=development
