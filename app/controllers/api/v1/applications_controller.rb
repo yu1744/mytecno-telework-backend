@@ -2,16 +2,21 @@ class Api::V1::ApplicationsController < ApplicationController
   before_action :authenticate_api_v1_user!
 
   def index
-    if current_api_v1_user.role&.name == 'user' || current_api_v1_user.role&.name.nil?
-      @applications = Application.where(user_id: current_api_v1_user.id)
-    elsif current_api_v1_user.role&.name == 'approver'
-      department_users = User.where(department_id: current_api_v1_user.department_id)
-      @applications = Application.where(user_id: department_users.select(:id))
-    else
-      department_users = User.where(department_id: current_api_v1_user.department_id)
-      @applications = Application.where(user_id: department_users.select(:id))
-                                   .or(Application.where(id: Approval.where(approver_id: current_api_v1_user.id).select(:application_id)))
-                                   .distinct
+    # 申請履歴は全ユーザー（管理者・承認者含む）自分の申請のみ表示する
+    @applications = Application.where(user_id: current_api_v1_user.id)
+
+    @applications = @applications.includes(user: :department).includes(:application_status)
+
+    # Filtering
+    if params[:filter_by_status].present?
+      @applications = @applications.where(application_status_id: params[:filter_by_status])
+    end
+    # filter_by_user is no longer needed if we only show own applications, but keeping it won't hurt if it's for self
+    if params[:filter_by_user].present? && current_api_v1_user.admin?
+       # If admin wants to see specific user's applications via this endpoint, maybe we should allow it?
+       # But the requirement is "Restrict application history to the current user".
+       # Let's stick to the requirement: "管理者や承認者でも自分の申請のみのほうがわかりやすい"
+       # So strictly own applications.
     end
 
     @applications = @applications.includes(user: :department).includes(:application_status)

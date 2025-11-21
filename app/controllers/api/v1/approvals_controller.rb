@@ -35,7 +35,10 @@ class Api::V1::ApprovalsController < ApplicationController
 
     render json: applications.as_json(
       include: {
-        user: { only: %i[id name] },
+        user: {
+          only: %i[id name],
+          include: { department: { only: [:name] } }
+        },
         application_status: { only: [:name] }
       },
       methods: %i[is_special_appointment work_hours_exceeded],

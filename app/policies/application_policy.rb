@@ -33,7 +33,7 @@ class ApplicationPolicy
   end
 
   def destroy?
-    user.role.name == 'admin' ? false : user == record.user
+    record.user_id == user.id
   end
 
   class Scope
